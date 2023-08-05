@@ -110,7 +110,7 @@ app.post("/login", async (req, res) => {
     // Our register logic ends here
   });
   
-app.post('myzakaz',(req,res)=>{
+app.post('myzakaz',auth, async(req,res)=>{
   
   
   myzakaz.find({userId:req.body.userId})
@@ -136,8 +136,17 @@ app.post('myzakaz',(req,res)=>{
       res.send('Error')
     })
 })
+app.get('/myzakaz/:id',auth,async(req,res)=>{
+  myzakaz.find({userId:req.params.id})
+  .then(resp=>{
+    res.send(resp[0].product)
+  })
+  .catch(err=>{
+    console.log(err);
+  })
+})
 
-app.post('/myproduct',(req,res)=>{
+app.post('/myproduct',auth,async(req,res)=>{
   console.log(req.body);
   product.find({userId:req.body.userId})
   .then(resp=>{
@@ -164,7 +173,7 @@ app.post('/myproduct',(req,res)=>{
 
  
 })
-app.get('/myproduct/:id',(req,res)=>{
+app.get('/myproduct/:id',auth,async(req,res)=>{
   product.find({userId:req.params.id})
   .then(resp=>{
     res.send(resp[0].product)
@@ -174,7 +183,7 @@ app.get('/myproduct/:id',(req,res)=>{
   })
 })
 
-app.get("/welcome", auth, (req, res) => {
+app.get("/welcome", auth,async (req, res) => {
     res.status(200).send("Welcome 🙌 ");
 });
 

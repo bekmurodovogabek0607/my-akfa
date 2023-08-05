@@ -4,7 +4,7 @@ const zakazSchema = new mongoose.Schema({
     name: String,
     tel: String,
     adress: String,
-    userid:String,
+    userId:String,
     zakaz: [
         {
             ZakazStyles: String,
