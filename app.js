@@ -176,8 +176,8 @@ app.post('/myproduct',auth,async(req,res)=>{
 app.get('/myproduct/:id',auth,async(req,res)=>{
   product.find({userId:req.params.id})
   .then(resp=>{
-    if(resp.length==0) res.send('no date')
-    else res.send(resp[0].product)
+    if(resp.length==0){ res.send('no date')}
+    else {res.send(resp[0].product)}
     
   })
   .catch(err=>{
