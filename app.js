@@ -1,6 +1,7 @@
 require("dotenv").config();
 var axios = require('axios');
 var FormData = require('form-data');
+var request = require('request');
 require("./config/database").connect();
 const auth = require("./middleware/auth");
 const express = require("express");
@@ -19,31 +20,46 @@ const User = require("./model/user");
 
 const myzakaz = require("./model/myzakaz");
 const product = require("./model/product");
+const verify = require("./model/verifyuser");
+
 
 
 //get token
-app.get('/token', (req, res) => {
-  var config = {
-    method: 'get',
-    maxBodyLength: Infinity,
-    url: 'notify.eskiz.uz/api/auth/user',
-    headers: {}
-  };
+// app.get('/token', (req, res) => {
+//   var data = new FormData();
+//   data.append('email', 'bekmurodovogabek0607@gmail.com');
+//   data.append('password', 'VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH');
 
-  axios(config)
-    .then(function (response) {
-      console.log(JSON.stringify(response.data));
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-})
+//   var config = {
+//     method: 'post',
+//     maxBodyLength: Infinity,
+//     url: 'https://notify.eskiz.uz/api/auth/login',
+
+//     headers: {
+//       ...data.getHeaders()
+//     },
+//     data: data
+//   };
+
+//   axios(config)
+//     .then(function (response) {
+//       console.log(JSON.stringify(response.data));
+//     })
+//     .catch(function (error) {
+//       res.send(error)
+//     });
+
+// })
 
 //send message
 
-app.post('/send', (req, res) => {
+app.post('/send', async (req, res) => {
 
+  const oldUser = await User.findOne({ tel: req.body.mobile });
 
+  if (oldUser) {
+    return res.send("Please Login").status(409);
+  }
   var data = new FormData();
   data.append('email', 'bekmurodovogabek0607@gmail.com');
   data.append('password', 'VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH');
@@ -51,7 +67,8 @@ app.post('/send', (req, res) => {
   var config = {
     method: 'post',
     maxBodyLength: Infinity,
-    url: 'notify.eskiz.uz/api/auth/login',
+    url: 'https://notify.eskiz.uz/api/auth/login',
+
     headers: {
       ...data.getHeaders()
     },
@@ -59,80 +76,131 @@ app.post('/send', (req, res) => {
   };
 
   axios(config)
-    .then(function (response) {
-      console.log(JSON.stringify(response.data));
+    .then(async function (response) {
+      console.log(req.body.mobile);
+      const user = await User.findOne({ tel: `+${req.body.mobile}` });
+      console.log(user);
+      if (user != null) { res.send('userBor') }
+      else {
+        SendSMS(JSON.stringify('Bearer ' + response.data.data.token))
+
+      }
     })
     .catch(function (error) {
-      console.log(error);
+      res.send(error)
     });
-  // var data = '{\r\n    "messages": [\r\n        {"user_sms_id":"sms1","to": 998993857759, "text": "eto test"},\r\n  ],\r\n    "from": "4546",\r\n    "dispatch_id": 123\r\n}';
 
-  // var config = {
-  //   method: 'post',
-  //   maxBodyLength: Infinity,
-  //   url: 'notify.eskiz.uz/api/message/sms/send-batch',
-  //   headers: {
-  //     'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQ3MDEsInJvbGUiOm51bGwsImRhdGEiOnsiaWQiOjQ3MDEsIm5hbWUiOiJTYXlpZG92YSBEaWxkb3JhIFRvaXJvdm5hIiwiZW1haWwiOiJiZWttdXJvZG92b2dhYmVrMDYwN0BnbWFpbC5jb20iLCJyb2xlIjpudWxsLCJhcGlfdG9rZW4iOm51bGwsInN0YXR1cyI6ImFjdGl2ZSIsInNtc19hcGlfbG9naW4iOiJlc2tpejIiLCJzbXNfYXBpX3Bhc3N3b3JkIjoiZSQkayF6IiwidXpfcHJpY2UiOjUwLCJ1Y2VsbF9wcmljZSI6MTE1LCJ0ZXN0X3VjZWxsX3ByaWNlIjpudWxsLCJiYWxhbmNlIjo0OTUwLCJpc192aXAiOjAsImhvc3QiOiJzZXJ2ZXIxIiwiY3JlYXRlZF9hdCI6IjIwMjMtMDgtMDlUMTE6MDg6MzEuMDAwMDAwWiIsInVwZGF0ZWRfYXQiOiIyMDIzLTA4LTEwVDA5OjUxOjAzLjAwMDAwMFoiLCJ3aGl0ZWxpc3QiOm51bGwsImhhc19wZXJmZWN0dW0iOjAsImJlZWxpbmVfcHJpY2UiOm51bGx9LCJpYXQiOjE2OTE2NjQyNDYsImV4cCI6MTY5NDI1NjI0Nn0.GPWeBcnlP-8ZzCuXwvKunERVIEL4Ihpt3qktlyDWgTg'
-  //   },
-  //   data: data
-  // };
 
-  // axios(config)
-  //   .then(function (response) {
-  //     console.log(JSON.stringify(response.data));
-  //   })
-  //   .catch(function (error) {
-  //     console.log(error);
-  //   });
+
+
+  function SendSMS(token) {
+    console.log('sms ga kirdi');
+    console.log(req.body);
+    var data = new FormData();
+    const sms = Math.floor(Math.random() * 100000);
+    data.append('mobile_phone', req.body.mobile);
+    data.append('message', `verify code-${sms}`);
+    data.append('from', '4546');
+    data.append('callback_url', 'http://0000.uz/test.php');
+    var config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'http://notify.eskiz.uz/api/message/sms/send',
+      headers: {
+        'Authorization': token,
+        ...data.getHeaders()
+      },
+      data: data
+    };
+    console.log('sms ga kirdi shu yergacha ishladi');
+
+    axios(config)
+      .then(function (response) {
+        console.log(JSON.stringify(response.data));
+        const Verify_code = new verify({ tel: req.body.mobile, verify_code: sms })
+        Verify_code.save()
+          .then(resp => {
+            console.log(resp);
+            res.send('Jonatildi')
+            console.log('jonatildi');
+          })
+          .catch(err => {
+            console.log('xato 1');
+          })
+
+
+
+
+      })
+      .catch(function (error) {
+        console.log(error);
+        console.log('xato 2');
+      })
+  }
+
+
+
+
 })
 // Register
 
 app.post("/register", async (req, res) => {
-
+  console.log(req.body);
   // Our register logic starts here
   try {
     // Get user input
-    const { name, email, password } = req.body;
+    const { name, tel, password, verif } = req.body;
 
     // Validate user input
-    if (!(email && password && name)) {
-      res.status(400).send("All input is required");
+    if (!(tel && password && name && verif)) {
+      return res.status(400).send("All input is required");
     }
 
     // check if user already exist
     // Validate if user exist in our database
-    const oldUser = await User.findOne({ email });
 
-    if (oldUser) {
-      return res.send("Please Login").status(409);
+    const ChechToken = await verify.findOne({ tel: tel.slice(1, 13)})
+    console.log('tekshirish veryfy:'+ChechToken);
+    console.log('tekshirish veryfy body:'+verif);
+
+    if (ChechToken?.verify_code != verif) {
+      return res.send("Invalit Password").status(409);
     }
-
     //Encrypt user password
     encryptedPassword = await bcrypt.hash(password, 10);
 
     // Create user in our database
     const user = await User.create({
       name,
-      email: email.toLowerCase(), // sanitize: convert email to lowercase
+      tel, // sanitize: convert email to lowercase
+
       password: encryptedPassword,
-      faol: `${new Date().getDay()}-${new Date().getMonth() + 2}-${new Date().getFullYear()}`,
+      verif,
+      faol: `${new Date().getDate()}-${new Date().getMonth() + 2}-${new Date().getFullYear()}`,
       registerDate: `${new Date().getDay()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}`,
     });
 
     // Create token
     const token = jwt.sign(
-      { user_id: user._id, email },
-      process.env.TOKEN_KEY,
+      { user_id: user._id, tel },
+      'token',
       {
         expiresIn: "2h",
       }
     );
+
+
+
     // save user token
     user.token = token;
-
     // return new user
     res.status(201).json(user);
+
+
+
+
   } catch (err) {
+    console.log('xato bu yerdan');
     console.log(err);
   }
   // Our register logic ends here
@@ -146,19 +214,19 @@ app.post("/login", async (req, res) => {
   // Our login logic starts here
   try {
     // Get user input
-    const { email, password } = req.body;
+    const { tel, password } = req.body;
 
     // Validate user input
-    if (!(email && password)) {
+    if (!(tel && password)) {
       res.status(400).send("All input is required");
     }
     // Validate if user exist in our database
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ tel });
 
     if (user && (await bcrypt.compare(password, user.password))) {
       // Create token
       const token = jwt.sign(
-        { user_id: user._id, email },
+        { user_id: user._id, tel },
         process.env.TOKEN_KEY,
         {
           expiresIn: "2h",
@@ -169,7 +237,7 @@ app.post("/login", async (req, res) => {
       user.token = token;
 
       // user
-      res.status(200).json(user);
+      res.status(200).json(user)
     }
     res.send("Invalid");
   } catch (err) {
