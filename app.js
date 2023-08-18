@@ -21,6 +21,7 @@ const User = require("./model/user");
 const myzakaz = require("./model/myzakaz");
 const product = require("./model/product");
 const verify = require("./model/verifyuser");
+const mehnat = require("./model/mehnat");
 
 
 
@@ -159,11 +160,10 @@ app.post("/register", async (req, res) => {
     // check if user already exist
     // Validate if user exist in our database
 
-    const ChechToken = await verify.findOne({ tel: tel.slice(1, 13)})
-    console.log('tekshirish veryfy:'+ChechToken);
-    console.log('tekshirish veryfy body:'+verif);
+    const ChechVerify = await verify.findOne({ tel: tel.slice(1, 13) })
 
-    if (ChechToken?.verify_code != verif) {
+
+    if (ChechVerify?.verify_code != verif) {
       return res.send("Invalit Password").status(409);
     }
     //Encrypt user password
@@ -177,7 +177,7 @@ app.post("/register", async (req, res) => {
       password: encryptedPassword,
       verif,
       faol: `${new Date().getDate()}-${new Date().getMonth() + 2}-${new Date().getFullYear()}`,
-      registerDate: `${new Date().getDay()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}`,
+      registerDate: `${new Date().getDate()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}`,
     });
 
     // Create token
@@ -188,6 +188,14 @@ app.post("/register", async (req, res) => {
         expiresIn: "2h",
       }
     );
+    await verify.findByIdAndDelete(ChechVerify._id)
+      .then(resp => {
+        console.log(resp);
+      })
+      .catch(err => {
+        console.log(er);
+      })
+
 
 
 
@@ -218,7 +226,7 @@ app.post("/login", async (req, res) => {
 
     // Validate user input
     if (!(tel && password)) {
-      res.status(400).send("All input is required");
+      return res.status(400).send("All input is required");
     }
     // Validate if user exist in our database
     const user = await User.findOne({ tel });
@@ -237,7 +245,7 @@ app.post("/login", async (req, res) => {
       user.token = token;
 
       // user
-      res.status(200).json(user)
+      return res.status(200).json(user)
     }
     res.send("Invalid");
   } catch (err) {
@@ -245,6 +253,127 @@ app.post("/login", async (req, res) => {
   }
   // Our register logic ends here
 });
+// Forget PAssword
+
+app.post('/forget', async (req, res) => {
+  console.log(req.body);
+  const oldUser = await User.findOne({ tel: req.body.mobile });
+
+  if (!oldUser) {
+    return res.send("Please Login").status(409);
+  }
+  var data = new FormData();
+  data.append('email', 'bekmurodovogabek0607@gmail.com');
+  data.append('password', 'VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH');
+
+  var config = {
+    method: 'post',
+    maxBodyLength: Infinity,
+    url: 'https://notify.eskiz.uz/api/auth/login',
+
+    headers: {
+      ...data.getHeaders()
+    },
+    data: data
+  };
+
+  axios(config)
+    .then(async function (response) {
+
+      SendSMS(JSON.stringify('Bearer ' + response.data.data.token))
+
+
+    })
+    .catch(function (error) {
+      res.send(error)
+    });
+
+
+
+
+  function SendSMS(token) {
+    console.log('sms ga kirdi');
+    console.log(req.body);
+    var data = new FormData();
+    const sms = Math.floor(Math.random() * 100000);
+    data.append('mobile_phone', req.body.mobile.slice(1, 13));
+    data.append('message', `verify code-${sms}`);
+    data.append('from', '4546');
+    data.append('callback_url', 'http://0000.uz/test.php');
+    var config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'http://notify.eskiz.uz/api/message/sms/send',
+      headers: {
+        'Authorization': token,
+        ...data.getHeaders()
+      },
+      data: data
+    };
+    console.log('sms ga kirdi shu yergacha ishladi');
+
+    axios(config)
+      .then(function (response) {
+        console.log(JSON.stringify(response.data));
+        const Verify_code = new verify({ tel: req.body.mobile, verify_code: sms })
+        Verify_code.save()
+          .then(resp => {
+            console.log(resp);
+            res.send('Jonatildi')
+            console.log('jonatildi');
+          })
+          .catch(err => {
+            console.log('xato 1');
+          })
+
+
+
+
+      })
+      .catch(function (error) {
+        console.log(error);
+        console.log('xato 2');
+      })
+  }
+})
+// Change Password
+app.post('/checkverif', async (req, res) => {
+  const { tel, verif } = req.body
+  console.log(req.body);
+  const ChechVerify = await verify.findOne({ tel: req.body.tel })
+  console.log("ChechVerify:");
+  console.log(ChechVerify);
+  if (ChechVerify?.verify_code != verif) {
+    res.send("Invalit Password").status(409);
+  }
+  else {
+    await verify.findOneAndDelete({ tel: req.body.tel })
+      .then(resp => {
+        console.log(resp);
+        res.send('ok')
+      })
+      .catch(err => {
+        console.log(er);
+      })
+  }
+
+
+
+})
+// chenge password
+app.post('/changepassword', async (req, res) => {
+  console.log(req.body);
+  encryptedPassword = await bcrypt.hash(req.body.password, 10);
+  await User.findOneAndUpdate({ tel: req.body.tel }, { password: encryptedPassword })
+    .then(resp => {
+      res.send('updated')
+    })
+    .catch(err => {
+      console.log(err);
+    })
+
+})
+// 
 
 app.post('myzakaz', auth, async (req, res) => {
 
@@ -324,5 +453,83 @@ app.get('/myproduct/:id', auth, async (req, res) => {
 app.get("/welcome", auth, async (req, res) => {
   res.status(200).send("Welcome 🙌 ");
 });
+// mehnat haqqi sifatida
+app.post('/mystyles', auth, async (req, res) => {
+  const { userId, total } = req.body
+  console.log('userIDmi:' + userId);
+  console.log('total:');
+  console.log(total);
+
+  const Oldmehnat = await mehnat.findOne({ userId })
+
+  console.log(Oldmehnat);
+  if (!Oldmehnat) {
+    const newMehnat = new mehnat({ userId: userId, total: total })
+    newMehnat.save()
+      .then(resp => {
+        res.send('Saved')
+      })
+      .catch(err => {
+        console.log(err);
+      })
+  }
+  else {
+    const chechUpdtae = Oldmehnat.total.filter(item => item.style == total[0].style)
+    const Updtae = Oldmehnat.total.filter(item => item.style != total[0].style)
+    console.log('yangi kelgani');
+console.log(chechUpdtae);
+console.log('qolganlari');
+console.log(Updtae);
+    if (chechUpdtae.length == 0) {
+      await mehnat.findOneAndUpdate({ userId }, { total: [...Oldmehnat.total, ...total] })
+        .then(resp => {
+          res.send('Updated')
+        })
+        .catch(err => {
+          console.log(err);
+        })
+    }
+    else {
+      await mehnat.findOneAndUpdate({ userId }, { total: [...Updtae, ...total] })
+        .then(resp => {
+          res.send('Updated')
+        })
+        .catch(err => {
+          console.log(err);
+        })
+    }
+
+
+
+  }
+
+})
+// delete mehnat haqqi sifatida
+app.post('/mystylesdelete', auth, async (req, res) => {
+  const { userId, style } = req.body
+  const Oldmehnat = await mehnat.findOne({ userId })
+  console.log(Oldmehnat);
+  const newTotal = Oldmehnat.total.filter(item => item.style != style)
+  await mehnat.findOneAndUpdate({ userId }, { total: newTotal })
+    .then(reps => {
+      res.send('Deleted')
+    })
+    .catch(err => {
+      console.log(err);
+    })
+})
+//get mehnat 
+app.get('/mystyles/:id', auth, async (req, res) => {
+  await mehnat.findOne({ userId: req.params.id })
+    .then(resp => {
+
+      res.send(resp)
+
+    })
+    .catch(err => {
+      console.log(err);
+    })
+})
+// check  
 
 module.exports = app;
