@@ -56,7 +56,7 @@ const myclient = require("./model/myclient");
 
 //send message
 
-function sendSMS (mobile,text)  {
+function sendSMS (mobile,text,res)  {
 
   
 
@@ -84,7 +84,7 @@ function sendSMS (mobile,text)  {
       
     })
     .catch(function (error) {
-      res.send(error)
+      console.log(error);
     });
 
 
@@ -92,11 +92,14 @@ function sendSMS (mobile,text)  {
 
   function SendSMS(token) {
     console.log('sms ga kirdi');
-    console.log(req.body);
+   
     var data = new FormData();
-    const sms = Math.floor(Math.random() * 100000);
+    console.log(mobile);
+    console.log(text);
+
     data.append('mobile_phone', mobile);
     data.append('message', text);
+
     data.append('from', '4546');
     data.append('callback_url', 'http://0000.uz/test.php');
     var config = {
@@ -117,7 +120,7 @@ function sendSMS (mobile,text)  {
             res.send('Jonatildi')
         })
       .catch(function (error) {
-        console.log(error);
+      
         console.log('xato 2');
       })
   }
@@ -514,7 +517,7 @@ app.get('/mystyles/:id', auth, async (req, res) => {
     })
 })
 // my-client create
-app.post('/myclient', auth, async (req, res) => {
+app.post('/myclient', async (req, res) => {
   const sss = req.body.zakaz
   const sum = sss.reduce((a, b) => {
     if (b.narxi != undefined) return a + (b.narxi * b.soni)
@@ -524,15 +527,15 @@ app.post('/myclient', auth, async (req, res) => {
   const myclientt = new myclient({ ...req.body, status: 0, umumiysumma: sum, buyurtmaraqami: Math.floor(Math.random() * 10000000000) ,qabuldata:`${new Date().getDate()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}`})
   myclientt.save()
     .then(resp => {
-      sendSMS(req.body.tel.slice(1,13),'Buyutma qabul qilindi')
+      sendSMS(req.body.tel.slice(1,13),'Buyutma qabul qilindi',res)
     })
     .catch(err => {
       console.log(err);
     })
 
 })
-app.get('/allmyclient/:id',auth, async(req,res)=>{
-   await myclient.findOne({userId:req.params.id})
+app.get('/allmyclient/:id',async(req,res)=>{
+   await myclient.find({userId:req.params.id})
    .then(resp=>{
     res.send(resp)
    })
