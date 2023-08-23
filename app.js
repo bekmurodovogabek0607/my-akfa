@@ -23,6 +23,8 @@ const product = require("./model/product");
 const verify = require("./model/verifyuser");
 const mehnat = require("./model/mehnat");
 
+const myclient = require("./model/myclient");
+
 
 
 //get token
@@ -54,13 +56,11 @@ const mehnat = require("./model/mehnat");
 
 //send message
 
-app.post('/send', async (req, res) => {
+function sendSMS (mobile,text)  {
 
-  const oldUser = await User.findOne({ tel: req.body.mobile });
+  
 
-  if (oldUser) {
-    return res.send("Please Login").status(409);
-  }
+  
   var data = new FormData();
   data.append('email', 'bekmurodovogabek0607@gmail.com');
   data.append('password', 'VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH');
@@ -78,14 +78,10 @@ app.post('/send', async (req, res) => {
 
   axios(config)
     .then(async function (response) {
-      console.log(req.body.mobile);
-      const user = await User.findOne({ tel: `+${req.body.mobile}` });
-      console.log(user);
-      if (user != null) { res.send('userBor') }
-      else {
+     
         SendSMS(JSON.stringify('Bearer ' + response.data.data.token))
 
-      }
+      
     })
     .catch(function (error) {
       res.send(error)
@@ -99,8 +95,8 @@ app.post('/send', async (req, res) => {
     console.log(req.body);
     var data = new FormData();
     const sms = Math.floor(Math.random() * 100000);
-    data.append('mobile_phone', req.body.mobile);
-    data.append('message', `verify code-${sms}`);
+    data.append('mobile_phone', mobile);
+    data.append('message', text);
     data.append('from', '4546');
     data.append('callback_url', 'http://0000.uz/test.php');
     var config = {
@@ -117,22 +113,9 @@ app.post('/send', async (req, res) => {
 
     axios(config)
       .then(function (response) {
-        console.log(JSON.stringify(response.data));
-        const Verify_code = new verify({ tel: req.body.mobile, verify_code: sms })
-        Verify_code.save()
-          .then(resp => {
-            console.log(resp);
+       
             res.send('Jonatildi')
-            console.log('jonatildi');
-          })
-          .catch(err => {
-            console.log('xato 1');
-          })
-
-
-
-
-      })
+        })
       .catch(function (error) {
         console.log(error);
         console.log('xato 2');
@@ -142,7 +125,7 @@ app.post('/send', async (req, res) => {
 
 
 
-})
+}
 // Register
 
 app.post("/register", async (req, res) => {
@@ -477,9 +460,9 @@ app.post('/mystyles', auth, async (req, res) => {
     const chechUpdtae = Oldmehnat.total.filter(item => item.style == total[0].style)
     const Updtae = Oldmehnat.total.filter(item => item.style != total[0].style)
     console.log('yangi kelgani');
-console.log(chechUpdtae);
-console.log('qolganlari');
-console.log(Updtae);
+    console.log(chechUpdtae);
+    console.log('qolganlari');
+    console.log(Updtae);
     if (chechUpdtae.length == 0) {
       await mehnat.findOneAndUpdate({ userId }, { total: [...Oldmehnat.total, ...total] })
         .then(resp => {
@@ -530,6 +513,32 @@ app.get('/mystyles/:id', auth, async (req, res) => {
       console.log(err);
     })
 })
-// check  
+// my-client create
+app.post('/myclient', auth, async (req, res) => {
+  const sss = req.body.zakaz
+  const sum = sss.reduce((a, b) => {
+    if (b.narxi != undefined) return a + (b.narxi * b.soni)
+    else return a
+
+  }, 0);
+  const myclientt = new myclient({ ...req.body, status: 0, umumiysumma: sum, buyurtmaraqami: Math.floor(Math.random() * 10000000000) ,qabuldata:`${new Date().getDate()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}`})
+  myclientt.save()
+    .then(resp => {
+      sendSMS(req.body.tel.slice(1,13),'Buyutma qabul qilindi')
+    })
+    .catch(err => {
+      console.log(err);
+    })
+
+})
+app.get('/allmyclient/:id',auth, async(req,res)=>{
+   await myclient.findOne({userId:req.params.id})
+   .then(resp=>{
+    res.send(resp)
+   })
+   .catch(err=>{
+    console.log(err);
+   })
+})
 
 module.exports = app;
