@@ -361,7 +361,7 @@ app.post('/changepassword', async (req, res) => {
 })
 // 
 
-app.post('myzakaz', auth, async (req, res) => {
+app.post('myzakaz',  async (req, res) => {
 
 
   myzakaz.find({ userId: req.body.userId })
@@ -387,7 +387,7 @@ app.post('myzakaz', auth, async (req, res) => {
       res.send('Error')
     })
 })
-app.get('/myzakaz/:id', auth, async (req, res) => {
+app.get('/myzakaz/:id', async (req, res) => {
   myzakaz.find({ userId: req.params.id })
     .then(resp => {
       res.send(resp[0].product)
@@ -397,7 +397,7 @@ app.get('/myzakaz/:id', auth, async (req, res) => {
     })
 })
 
-app.post('/myproduct', auth, async (req, res) => {
+app.post('/myproduct',  async (req, res) => {
   console.log(req.body);
   product.find({ userId: req.body.userId })
     .then(resp => {
@@ -424,7 +424,7 @@ app.post('/myproduct', auth, async (req, res) => {
 
 
 })
-app.get('/myproduct/:id', auth, async (req, res) => {
+app.get('/myproduct/:id', async (req, res) => {
   product.find({ userId: req.params.id })
     .then(resp => {
       if (resp.length == 0) { res.send('no date') }
@@ -436,11 +436,11 @@ app.get('/myproduct/:id', auth, async (req, res) => {
     })
 })
 
-app.get("/welcome", auth, async (req, res) => {
+app.get("/welcome",  async (req, res) => {
   res.status(200).send("Welcome 🙌 ");
 });
 // mehnat haqqi sifatida
-app.post('/mystyles', auth, async (req, res) => {
+app.post('/mystyles',  async (req, res) => {
   const { userId, total } = req.body
   console.log('userIDmi:' + userId);
   console.log('total:');
@@ -491,7 +491,7 @@ app.post('/mystyles', auth, async (req, res) => {
 
 })
 // delete mehnat haqqi sifatida
-app.post('/mystylesdelete', auth, async (req, res) => {
+app.post('/mystylesdelete',  async (req, res) => {
   const { userId, style } = req.body
   const Oldmehnat = await mehnat.findOne({ userId })
   console.log(Oldmehnat);
@@ -505,7 +505,7 @@ app.post('/mystylesdelete', auth, async (req, res) => {
     })
 })
 //get mehnat 
-app.get('/mystyles/:id', auth, async (req, res) => {
+app.get('/mystyles/:id',  async (req, res) => {
   await mehnat.findOne({ userId: req.params.id })
     .then(resp => {
 
@@ -527,7 +527,8 @@ app.post('/myclient', async (req, res) => {
   const myclientt = new myclient({ ...req.body, status: 0, umumiysumma: sum, buyurtmaraqami: Math.floor(Math.random() * 10000000000) ,qabuldata:`${new Date().getDate()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}`})
   myclientt.save()
     .then(resp => {
-      sendSMS(req.body.tel.slice(1,13),'Buyutma qabul qilindi',res)
+      res.send("Jonatildi")
+     // sendSMS(req.body.tel.slice(1,13),'Buyutmangiz qabul qilindi',res)
     })
     .catch(err => {
       console.log(err);

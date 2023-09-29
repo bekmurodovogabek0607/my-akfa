@@ -6,6 +6,10 @@ const mehnatSchema = new mongoose.Schema({
         style:String,
         foiz:Number,
         price:Number,
+        petle:Number,
+        tich:Number,
+        chovuch:Number,
+        saydinitil:Number
     }]
 });
 

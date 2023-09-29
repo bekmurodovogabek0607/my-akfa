@@ -6,8 +6,13 @@ const productSchema = new mongoose.Schema({
         mexanizm: [{ mexanizm: String, narxi: Number }],
         pastki: [{ profil: String, narxi: Number }],
         shisha:[ { shisha: String, narxi: Number }],
+       
+        chovuch:[ { chovuch: String, narxi: Number }],
+        rezinashisha:[ { rezinashisha: String, narxi: Number }],
+        rezinaprofil:[ { rezinaprofil: String, narxi: Number }],
+        saydinitil:[ { saydinitil: String, narxi: Number }],
         tor: [{ tor: String, narxi: Number }],
-        profil: [{ profil: String, kosa: Number, orta: Number, shitapik: Number }],
+        profil: [{ profil: String, kosa: Number, orta: Number, shitapik: Number ,qanot:Number,tich:Number,petle:Number}],
         zamok: [{ zamok: String, shisha: Number }]
     }
 });
