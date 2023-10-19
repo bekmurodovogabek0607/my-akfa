@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-// holat     0 bolsa buyurtma qabul qilindi    1   bo'lsa   buyurtma najarib topshirildi qarzdorlik yoq  2 bo'lsa qarzdorlik mavjud
+// status     0 bolsa buyurtma qabul qilindi    1   bo'lsa   buyurtma najarib topshirildi qarzdorlik yoq  2 bo'lsa qarzdorlik mavjud
 
 const userclient = new mongoose.Schema({
     name: { type: String },

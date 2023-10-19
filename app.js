@@ -56,11 +56,11 @@ const myclient = require("./model/myclient");
 
 //send message
 
-function sendSMS (mobile,text,res)  {
+function sendSMS(mobile, text, res) {
 
-  
 
-  
+
+
   var data = new FormData();
   data.append('email', 'bekmurodovogabek0607@gmail.com');
   data.append('password', 'VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH');
@@ -78,10 +78,10 @@ function sendSMS (mobile,text,res)  {
 
   axios(config)
     .then(async function (response) {
-     
-        SendSMS(JSON.stringify('Bearer ' + response.data.data.token))
 
-      
+      SendSMS(JSON.stringify('Bearer ' + response.data.data.token))
+
+
     })
     .catch(function (error) {
       console.log(error);
@@ -92,7 +92,7 @@ function sendSMS (mobile,text,res)  {
 
   function SendSMS(token) {
     console.log('sms ga kirdi');
-   
+
     var data = new FormData();
     console.log(mobile);
     console.log(text);
@@ -116,11 +116,11 @@ function sendSMS (mobile,text,res)  {
 
     axios(config)
       .then(function (response) {
-       
-            res.send('Jonatildi')
-        })
+
+        res.send('Jonatildi')
+      })
       .catch(function (error) {
-      
+
         console.log('xato 2');
       })
   }
@@ -361,7 +361,7 @@ app.post('/changepassword', async (req, res) => {
 })
 // 
 
-app.post('myzakaz',  async (req, res) => {
+app.post('myzakaz', async (req, res) => {
 
 
   myzakaz.find({ userId: req.body.userId })
@@ -397,7 +397,7 @@ app.get('/myzakaz/:id', async (req, res) => {
     })
 })
 
-app.post('/myproduct',  async (req, res) => {
+app.post('/myproduct', async (req, res) => {
   console.log(req.body);
   product.find({ userId: req.body.userId })
     .then(resp => {
@@ -436,11 +436,11 @@ app.get('/myproduct/:id', async (req, res) => {
     })
 })
 
-app.get("/welcome",  async (req, res) => {
+app.get("/welcome", async (req, res) => {
   res.status(200).send("Welcome 🙌 ");
 });
 // mehnat haqqi sifatida
-app.post('/mystyles',  async (req, res) => {
+app.post('/mystyles', async (req, res) => {
   const { userId, total } = req.body
   console.log('userIDmi:' + userId);
   console.log('total:');
@@ -491,7 +491,7 @@ app.post('/mystyles',  async (req, res) => {
 
 })
 // delete mehnat haqqi sifatida
-app.post('/mystylesdelete',  async (req, res) => {
+app.post('/mystylesdelete', async (req, res) => {
   const { userId, style } = req.body
   const Oldmehnat = await mehnat.findOne({ userId })
   console.log(Oldmehnat);
@@ -505,7 +505,7 @@ app.post('/mystylesdelete',  async (req, res) => {
     })
 })
 //get mehnat 
-app.get('/mystyles/:id',  async (req, res) => {
+app.get('/mystyles/:id', async (req, res) => {
   await mehnat.findOne({ userId: req.params.id })
     .then(resp => {
 
@@ -519,30 +519,58 @@ app.get('/mystyles/:id',  async (req, res) => {
 // my-client create
 app.post('/myclient', async (req, res) => {
   const sss = req.body.zakaz
+  console.log(sss);
   const sum = sss.reduce((a, b) => {
     if (b.narxi != undefined) return a + (b.narxi * b.soni)
     else return a
 
   }, 0);
-  const myclientt = new myclient({ ...req.body, status: 0, umumiysumma: sum, buyurtmaraqami: Math.floor(Math.random() * 10000000000) ,qabuldata:`${new Date().getDate()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}`})
+  const myclientt = new myclient({ ...req.body, status: 0, umumiysumma: sum, buyurtmaraqami: Math.floor(Math.random() * 10000000000), qabuldata: `${new Date().getDate()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}` })
   myclientt.save()
     .then(resp => {
       res.send("Jonatildi")
-     // sendSMS(req.body.tel.slice(1,13),'Buyutmangiz qabul qilindi',res)
+      // sendSMS(req.body.tel.slice(1,13),'Buyutmangiz qabul qilindi',res)
     })
     .catch(err => {
       console.log(err);
     })
 
 })
-app.get('/allmyclient/:id',async(req,res)=>{
-   await myclient.find({userId:req.params.id})
-   .then(resp=>{
-    res.send(resp)
-   })
-   .catch(err=>{
+app.get('/allmyclient/:id', async (req, res) => {
+  await myclient.find({ userId: req.params.id })
+    .then(resp => {
+      res.send(resp)
+    })
+    .catch(err => {
+      console.log(err);
+    })
+})
+app.post('/clientok/:id', async (req, res) => {
+  await myclient.findOneAndUpdate({ _id: req.params.id }, { status: req.body.status })
+    .then(resp => {
+      res.send('updated')
+    })
+    .catch(err => {
+      console.log(err);
+    })
+})
+app.post('/clientdelete/:id', async (req, res) => {
+  await myclient.findByIdAndDelete(req.params.id)
+    .then(resp => {
+      res.send('updated')
+    })
+    .catch(err => {
+      console.log(err);
+    })
+})
+app.post('/clientqarz/:id',async(req,res)=>{
+  await myclient.findOneAndUpdate({ _id: req.params.id }, { status: req.body.status ,tolangansumma:req.body.tolangansumma})
+  .then(resp => {
+    res.send('updated')
+  })
+  .catch(err => {
     console.log(err);
-   })
+  })
 })
 
 module.exports = app;
