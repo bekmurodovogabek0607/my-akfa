@@ -296,83 +296,23 @@ app.post('/forget', async (req, res) => {
   if (!oldUser) {
     return res.send("Please Login").status(409);
   }
-  var data = new FormData();
-  data.append('email', 'bekmurodovogabek0607@gmail.com');
-  data.append('password', 'VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH');
+  const sms = Math.floor(Math.random() * 100000);
 
-  var config = {
-    method: 'post',
-    maxBodyLength: Infinity,
-    url: 'https://notify.eskiz.uz/api/auth/login',
-
-    headers: {
-      ...data.getHeaders()
-    },
-    data: data
-  };
-
-  axios(config)
-    .then(async function (response) {
-
-      SendSMS(JSON.stringify('Bearer ' + response.data.data.token))
-
-
+  const Verify_code = new verify({ tel: req.body.mobile, verify_code: sms })
+  Verify_code.save()
+    .then(resp => {
+      console.log(resp);
+      setTimeout(() => {
+        Muddat(req.body.mobile.slice(1, 13))
+      }, 300000);
+      res.send('Jonatildi')
+      console.log('jonatildi');
     })
-    .catch(function (error) {
-      res.send(error)
-    });
+    .catch(err => {
+      console.log('xato 1');
+    })
+  sendSMS(req.body.mobile.slice(1, 13), `verify code:${sms}`, res)
 
-
-
-
-  function SendSMS(token) {
-    console.log('sms ga kirdi');
-    console.log(req.body);
-    var data = new FormData();
-    const sms = Math.floor(Math.random() * 100000);
-    data.append('mobile_phone', req.body.mobile.slice(1, 13));
-    data.append('message', `verify code-${sms}`);
-    data.append('from', '4546');
-    data.append('callback_url', 'http://0000.uz/test.php');
-    var config = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: 'http://notify.eskiz.uz/api/message/sms/send',
-      headers: {
-        'Authorization': token,
-        ...data.getHeaders()
-      },
-      data: data
-    };
-    console.log('sms ga kirdi shu yergacha ishladi');
-
-    axios(config)
-      .then(function (response) {
-        console.log(JSON.stringify(response.data));
-        const Verify_code = new verify({ tel: req.body.mobile, verify_code: sms })
-        Verify_code.save()
-          .then(resp => {
-            console.log(resp);
-            setTimeout(() => {
-              Muddat(req.body.mobile.slice(1, 13))
-            }, 300000);
-            res.send('Jonatildi')
-            console.log('jonatildi');
-          })
-          .catch(err => {
-            console.log('xato 1');
-          })
-
-
-
-
-      })
-      .catch(function (error) {
-        console.log(error);
-        console.log('xato 2');
-      })
-  }
- 
 })
 // Change Password
 app.post('/checkverif', async (req, res) => {
