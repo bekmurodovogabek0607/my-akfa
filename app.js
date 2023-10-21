@@ -54,18 +54,28 @@ const myclient = require("./model/myclient");
 
 // })
 
+// Verifi amal qilish muddati
+function Muddat(tel) {
+  verify.findOneAndDelete({ tel: tel })
+    .then(resp => {
+      console.log(resp);
+
+    })
+    .catch(err => {
+      console.log(er);
+    })
+
+}
+
 //send message
 
 function sendSMS(mobile, text, res) {
-
-
-
-
   var data = new FormData();
   data.append('email', 'bekmurodovogabek0607@gmail.com');
   data.append('password', 'VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH');
 
   var config = {
+
     method: 'post',
     maxBodyLength: Infinity,
     url: 'https://notify.eskiz.uz/api/auth/login',
@@ -199,6 +209,44 @@ app.post("/register", async (req, res) => {
   }
   // Our register logic ends here
 });
+app.post('/send', async (req, res) => {
+  console.log(req.body.mobile);
+  const user = await User.findOne({ tel: `+${req.body.mobile}` })
+  if (user == null) {
+
+    const verifiCode = Math.floor(Math.random() * 1000000)
+
+    sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
+    const Verify_code = new verify({ tel: req.body.mobile, verify_code: verifiCode })
+
+    Verify_code.save()
+      .then(resp => {
+        console.log(resp);
+        res.send('Jonatildi')
+        setTimeout(() => {
+          Muddat(req.body.mobile)
+        }, 300000);
+
+      })
+      .catch(err => {
+        console.log('xato 1');
+      })
+
+
+
+
+
+  }
+  else {
+    res.send('userBor')
+  }
+})
+
+//qarzdorga sms jonatish
+app.post('/qarzdorgasms', async (req, res) => {
+  sendSMS(req.body.mobile, "Hurmatli mijoz iltomos akfa eshk-derazadan qarzingizni to'lang", res)
+
+})
 
 
 
@@ -305,6 +353,9 @@ app.post('/forget', async (req, res) => {
         Verify_code.save()
           .then(resp => {
             console.log(resp);
+            setTimeout(() => {
+              Muddat(req.body.mobile.slice(1, 13))
+            }, 300000);
             res.send('Jonatildi')
             console.log('jonatildi');
           })
@@ -321,6 +372,7 @@ app.post('/forget', async (req, res) => {
         console.log('xato 2');
       })
   }
+ 
 })
 // Change Password
 app.post('/checkverif', async (req, res) => {
@@ -563,14 +615,14 @@ app.post('/clientdelete/:id', async (req, res) => {
       console.log(err);
     })
 })
-app.post('/clientqarz/:id',async(req,res)=>{
-  await myclient.findOneAndUpdate({ _id: req.params.id }, { status: req.body.status ,tolangansumma:req.body.tolangansumma})
-  .then(resp => {
-    res.send('updated')
-  })
-  .catch(err => {
-    console.log(err);
-  })
+app.post('/clientqarz/:id', async (req, res) => {
+  await myclient.findOneAndUpdate({ _id: req.params.id }, { status: req.body.status, tolangansumma: req.body.tolangansumma })
+    .then(resp => {
+      res.send('updated')
+    })
+    .catch(err => {
+      console.log(err);
+    })
 })
 
 module.exports = app;
