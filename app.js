@@ -67,7 +67,47 @@ function Muddat(tel) {
 
 }
 
+function AvtoFaol() {
+  User.find()
+    .then(resp => {
+      for (let i = 0; i < resp.length; i++) {
+        const date = new Date().getDate()
+        const mons = new Date().getMonth() + 1
+        const year = new Date().getFullYear()
+        const faoll = resp[i].faol.split('-')
+        const faol = Number(faoll[2]) * 365 + Number(faoll[1]) * 30 + Number(faoll[0])
+        const Hozir = year * 365 + mons * 30 + date
+        console.log(resp[i].name);
+
+        console.log(faol);
+        console.log(Hozir);
+
+        if (resp[i].shot >= resp[i].tarif && faol <= Hozir) {
+          const tarifoyi=resp[i].tarif/25000
+          User.findOneAndUpdate({ tel: resp[i].tel },
+            {
+              shot: resp[i].shot - resp[i].tarif,
+              faol: `${new Date().getDate()}-${new Date().getMonth() + 1+tarifoyi}-${new Date().getFullYear()}`,
+              sms: 50
+            })
+            .then(res=>{
+              console.log('okey');
+            })
+            .catch(err=>{
+              console.log('xatolik');
+            })
+        }
+
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    })
+
+
+}
 //send message
+setInterval(AvtoFaol, 86400000);
 
 function sendSMS(mobile, text, res) {
   var data = new FormData();
@@ -169,11 +209,13 @@ app.post("/register", async (req, res) => {
     const user = await User.create({
       name,
       tel, // sanitize: convert email to lowercase
-
       password: encryptedPassword,
       verif,
       faol: `${new Date().getDate()}-${new Date().getMonth() + 2}-${new Date().getFullYear()}`,
       registerDate: `${new Date().getDate()}-${new Date().getMonth() + 1}-${new Date().getFullYear()}`,
+      shot: 25000,
+      sms: 50,
+      tarif: 25000
     });
 
     // Create token
@@ -212,30 +254,23 @@ app.post("/register", async (req, res) => {
 app.post('/send', async (req, res) => {
   console.log(req.body.mobile);
   const user = await User.findOne({ tel: `+${req.body.mobile}` })
+  console.log('user:' + user);
   if (user == null) {
 
     const verifiCode = Math.floor(Math.random() * 1000000)
-
-    sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
     const Verify_code = new verify({ tel: req.body.mobile, verify_code: verifiCode })
-
     Verify_code.save()
       .then(resp => {
         console.log(resp);
+        // sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
         res.send('Jonatildi')
-        setTimeout(() => {
-          Muddat(req.body.mobile)
-        }, 300000);
+
+        // setTimeout(Muddat(req.body.mobile),300000);
 
       })
       .catch(err => {
         console.log('xato 1');
       })
-
-
-
-
-
   }
   else {
     res.send('userBor')
@@ -244,7 +279,7 @@ app.post('/send', async (req, res) => {
 
 //qarzdorga sms jonatish
 app.post('/qarzdorgasms', async (req, res) => {
-  sendSMS(req.body.mobile, "Hurmatli mijoz iltomos akfa eshk-derazadan qarzingizni to'lang", res)
+  sendSMS(req.body.mobile, "Hurmatli mijoz iltomos akfa eshik-derazadan qolgan qarzingizni to'lang", res)
 
 })
 
@@ -564,5 +599,13 @@ app.post('/clientqarz/:id', async (req, res) => {
       console.log(err);
     })
 })
-
+app.post('/changetarif',async(req,res)=>{
+  User.findOneAndUpdate({_id:req.body.id},{tarif:req.body.tarif})
+  .then(resp=>{
+    res.send('ok')
+  })
+  .catch(err=>{
+    res.send('xatolik')
+  })
+})
 module.exports = app;
