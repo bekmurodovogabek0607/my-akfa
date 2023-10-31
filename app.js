@@ -256,7 +256,7 @@ app.post('/send', async (req, res) => {
   const user = await User.findOne({ tel: `+${req.body.mobile}` })
   console.log('user:' + user);
   if (user == null) {
-      res.send('Jonatildi')
+    res.send('Jonatildi')
     // const verifiCode = Math.floor(Math.random() * 1000000)
     // const Verify_code = new verify({ tel: req.body.mobile, verify_code: verifiCode })
     // Verify_code.save()
@@ -282,6 +282,8 @@ app.post('/qarzdorgasms', async (req, res) => {
   sendSMS(req.body.mobile, "Hurmatli mijoz iltomos akfa eshik-derazadan qolgan qarzingizni to'lang", res)
 
 })
+
+
 
 // Login
 app.post("/login", async (req, res) => {
