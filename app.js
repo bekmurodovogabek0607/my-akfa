@@ -226,13 +226,13 @@ app.post("/register", async (req, res) => {
         expiresIn: "2h",
       }
     );
-    await verify.findByIdAndDelete(ChechVerify._id)
-      .then(resp => {
-        console.log(resp);
-      })
-      .catch(err => {
-        console.log(er);
-      })
+    // await verify.findByIdAndDelete(ChechVerify._id)
+    //   .then(resp => {
+    //     console.log(resp);
+    //   })
+    //   .catch(err => {
+    //     console.log(er);
+    //   })
 
 
 
