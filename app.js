@@ -196,12 +196,12 @@ app.post("/register", async (req, res) => {
     // check if user already exist
     // Validate if user exist in our database
 
-    const ChechVerify = await verify.findOne({ tel: tel.slice(1, 13) })
+    // const ChechVerify = await verify.findOne({ tel: tel.slice(1, 13) })
 
 
-    if (ChechVerify?.verify_code != verif) {
-      return res.send("Invalit Password").status(409);
-    }
+    // if (ChechVerify?.verify_code != verif) {
+    //   return res.send("Invalit Password").status(409);
+    // }
     //Encrypt user password
     encryptedPassword = await bcrypt.hash(password, 10);
 
@@ -256,21 +256,21 @@ app.post('/send', async (req, res) => {
   const user = await User.findOne({ tel: `+${req.body.mobile}` })
   console.log('user:' + user);
   if (user == null) {
+      res.send('Jonatildi')
+    // const verifiCode = Math.floor(Math.random() * 1000000)
+    // const Verify_code = new verify({ tel: req.body.mobile, verify_code: verifiCode })
+    // Verify_code.save()
+    //   .then(resp => {
+    //     console.log(resp);
+    //     // sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
+    //     res.send('Jonatildi')
 
-    const verifiCode = Math.floor(Math.random() * 1000000)
-    const Verify_code = new verify({ tel: req.body.mobile, verify_code: verifiCode })
-    Verify_code.save()
-      .then(resp => {
-        console.log(resp);
-        // sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
-        res.send('Jonatildi')
+    //     // setTimeout(Muddat(req.body.mobile),300000);
 
-        // setTimeout(Muddat(req.body.mobile),300000);
-
-      })
-      .catch(err => {
-        console.log('xato 1');
-      })
+    //   })
+    //   .catch(err => {
+    //     console.log('xato 1');
+    //   })
   }
   else {
     res.send('userBor')
@@ -282,8 +282,6 @@ app.post('/qarzdorgasms', async (req, res) => {
   sendSMS(req.body.mobile, "Hurmatli mijoz iltomos akfa eshik-derazadan qolgan qarzingizni to'lang", res)
 
 })
-
-
 
 // Login
 app.post("/login", async (req, res) => {
