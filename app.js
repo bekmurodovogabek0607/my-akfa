@@ -25,7 +25,7 @@ const mehnat = require("./model/mehnat");
 
 const myclient = require("./model/myclient");
 
-
+const SMSnarxi = 70
 
 //get token
 // app.get('/token', (req, res) => {
@@ -56,16 +56,40 @@ const myclient = require("./model/myclient");
 
 // Verifi amal qilish muddati
 function Muddat(tel) {
-  verify.findOneAndDelete({ tel: tel })
+  setTimeout(verify.findOneAndDelete({ tel: tel })
     .then(resp => {
       console.log(resp);
 
     })
     .catch(err => {
       console.log(er);
-    })
+    }), 300000);
+
 
 }
+setInterval(() => {
+  verify.find()
+    .then(resp => {
+
+      for (let i = 0; i < resp.length; i++) {
+        if (resp[i].gacha < new Date().getTime()) {
+          verify.findByIdAndDelete(resp[i]._id)
+            .then(rees => {
+              console.log('deleted');
+            })
+            .catch(err => {
+              console.log('verifyni avtoochirishda xatolik');
+            })
+        }
+
+      }
+
+    })
+    .catch(err => {
+      console.log(err);
+    })
+
+}, 30000);
 
 function AvtoFaol() {
   User.find()
@@ -83,17 +107,17 @@ function AvtoFaol() {
         console.log(Hozir);
 
         if (resp[i].shot >= resp[i].tarif && faol <= Hozir) {
-          const tarifoyi=resp[i].tarif/25000
+          const tarifoyi = resp[i].tarif / 25000
           User.findOneAndUpdate({ tel: resp[i].tel },
             {
               shot: resp[i].shot - resp[i].tarif,
-              faol: `${new Date().getDate()}-${new Date().getMonth() + 1+tarifoyi}-${new Date().getFullYear()}`,
+              faol: `${new Date().getDate()}-${new Date().getMonth() + 1 + tarifoyi}-${new Date().getFullYear()}`,
               sms: 50
             })
-            .then(res=>{
+            .then(res => {
               console.log('okey');
             })
-            .catch(err=>{
+            .catch(err => {
               console.log('xatolik');
             })
         }
@@ -196,12 +220,12 @@ app.post("/register", async (req, res) => {
     // check if user already exist
     // Validate if user exist in our database
 
-    // const ChechVerify = await verify.findOne({ tel: tel.slice(1, 13) })
+    const ChechVerify = await verify.findOne({ tel: tel.slice(1, 13) })
 
 
-    // if (ChechVerify?.verify_code != verif) {
-    //   return res.send("Invalit Password").status(409);
-    // }
+    if (ChechVerify?.verifycode != verif) {
+      return res.send("Invalit Password").status(409);
+    }
     //Encrypt user password
     encryptedPassword = await bcrypt.hash(password, 10);
 
@@ -226,13 +250,13 @@ app.post("/register", async (req, res) => {
         expiresIn: "2h",
       }
     );
-    // await verify.findByIdAndDelete(ChechVerify._id)
-    //   .then(resp => {
-    //     console.log(resp);
-    //   })
-    //   .catch(err => {
-    //     console.log(er);
-    //   })
+    await verify.findByIdAndDelete(ChechVerify._id)
+      .then(resp => {
+        console.log(resp);
+      })
+      .catch(err => {
+        console.log(er);
+      })
 
 
 
@@ -256,21 +280,26 @@ app.post('/send', async (req, res) => {
   const user = await User.findOne({ tel: `+${req.body.mobile}` })
   console.log('user:' + user);
   if (user == null) {
-    res.send('Jonatildi')
-    // const verifiCode = Math.floor(Math.random() * 1000000)
-    // const Verify_code = new verify({ tel: req.body.mobile, verify_code: verifiCode })
-    // Verify_code.save()
-    //   .then(resp => {
-    //     console.log(resp);
-    //     // sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
-    //     res.send('Jonatildi')
 
-    //     // setTimeout(Muddat(req.body.mobile),300000);
+    const verifiCode = Math.floor(Math.random() * 1000000)
+    const Verify = new verify({
+      tel: req.body.mobile,
+      verifycode: verifiCode,
 
-    //   })
-    //   .catch(err => {
-    //     console.log('xato 1');
-    //   })
+      gacha: `${new Date().getTime() + 300000}`
+    })
+    Verify.save().then(resp => {
+      console.log(resp);
+      sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
+      res.send('Jonatildi')
+
+
+    })
+      .catch(err => {
+        console.log('Verifyda xatolik');
+        console.log(err);
+
+      })
   }
   else {
     res.send('userBor')
@@ -279,11 +308,34 @@ app.post('/send', async (req, res) => {
 
 //qarzdorga sms jonatish
 app.post('/qarzdorgasms', async (req, res) => {
-  sendSMS(req.body.mobile, "Hurmatli mijoz iltomos akfa eshik-derazadan qolgan qarzingizni to'lang", res)
+  User.findById(req.body.userid)
+    .then(resp => {
+      if (resp.sms > 0) {
+        User.findByIdAndUpdate(req.body.userid, { sms: (resp.sms - 1) })
+          .then(rrr => {
+
+            sendSMS(req.body.mobile, "Hurmatli mijoz iltomos akfa eshik-derazadan qolgan qarzingizni to'lang", res)
+
+          })
+
+      }
+      else if (resp.shot > SMSnarxi) {
+        User.findByIdAndUpdate(req.body.userid, { shot: (resp.shot - SMSnarxi) })
+          .then(rrr => {
+
+            sendSMS(req.body.mobile, "Hurmatli mijoz iltomos akfa eshik-derazadan qolgan qarzingizni to'lang", res)
+
+          })
+      }
+      else {
+        res.send("mablag")
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    })
 
 })
-
-
 
 // Login
 app.post("/login", async (req, res) => {
@@ -333,20 +385,17 @@ app.post('/forget', async (req, res) => {
   }
   const sms = Math.floor(Math.random() * 100000);
 
-  const Verify_code = new verify({ tel: req.body.mobile, verify_code: sms })
+  const Verify_code = new verify({ tel: req.body.mobile, verifycode: sms, gacha: `${new Date().getTime() + 300000}` })
   Verify_code.save()
     .then(resp => {
       console.log(resp);
-      setTimeout(() => {
-        Muddat(req.body.mobile.slice(1, 13))
-      }, 300000);
-      res.send('Jonatildi')
-      console.log('jonatildi');
+     
+       sendSMS(req.body.mobile.slice(1, 13), `verify code:${sms}`, res)
     })
     .catch(err => {
       console.log('xato 1');
     })
-  sendSMS(req.body.mobile.slice(1, 13), `verify code:${sms}`, res)
+
 
 })
 // Change Password
@@ -356,7 +405,7 @@ app.post('/checkverif', async (req, res) => {
   const ChechVerify = await verify.findOne({ tel: req.body.tel })
   console.log("ChechVerify:");
   console.log(ChechVerify);
-  if (ChechVerify?.verify_code != verif) {
+  if (ChechVerify?.verifycode != verif) {
     res.send("Invalit Password").status(409);
   }
   else {
@@ -599,13 +648,13 @@ app.post('/clientqarz/:id', async (req, res) => {
       console.log(err);
     })
 })
-app.post('/changetarif',async(req,res)=>{
-  User.findOneAndUpdate({_id:req.body.id},{tarif:req.body.tarif})
-  .then(resp=>{
-    res.send('ok')
-  })
-  .catch(err=>{
-    res.send('xatolik')
-  })
+app.post('/changetarif', async (req, res) => {
+  User.findOneAndUpdate({ _id: req.body.id }, { tarif: req.body.tarif })
+    .then(resp => {
+      res.send('ok')
+    })
+    .catch(err => {
+      res.send('xatolik')
+    })
 })
 module.exports = app;
