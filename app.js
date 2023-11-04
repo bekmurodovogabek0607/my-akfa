@@ -134,9 +134,11 @@ function AvtoFaol() {
 setInterval(AvtoFaol, 86400000);
 
 function sendSMS(mobile, text, res) {
+  //bekmurodovogabek0607@gmail.com
+  //VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH
   var data = new FormData();
-  data.append('email', 'bekmurodovogabek0607@gmail.com');
-  data.append('password', 'VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH');
+  data.append('email', 'bekmurodovogabek919@gmail.com');
+  data.append('password', 'nsshRXnEc0xQZ98uKn1JToEYkYK3MauawdsWkAy3');
 
   var config = {
 
@@ -153,7 +155,7 @@ function sendSMS(mobile, text, res) {
   axios(config)
     .then(async function (response) {
 
-      SendSMS(JSON.stringify('Bearer ' + response.data.data.token))
+      SendSM(`Bearer ${response.data.data.token}`)
 
 
     })
@@ -164,7 +166,7 @@ function sendSMS(mobile, text, res) {
 
 
 
-  function SendSMS(token) {
+  function SendSM(token) {
     console.log('sms ga kirdi');
 
     var data = new FormData();
@@ -188,14 +190,12 @@ function sendSMS(mobile, text, res) {
     };
     console.log('sms ga kirdi shu yergacha ishladi');
 
-    axios(config)
-      .then(function (response) {
-
-        res.send('Jonatildi')
-      })
+    axios(config).then(function (response) {
+      res.send('Jonatildi')
+    })
       .catch(function (error) {
-
-        console.log('xato 2');
+        console.log('sms ketmadi');
+        console.log(error);
       })
   }
 
@@ -282,19 +282,13 @@ app.post('/send', async (req, res) => {
   if (user == null) {
 
     const verifiCode = Math.floor(Math.random() * 1000000)
-    const Verify = new verify({
-      tel: req.body.mobile,
-      verifycode: verifiCode,
-
-      gacha: `${new Date().getTime() + 300000}`
-    })
-    Verify.save().then(resp => {
-      console.log(resp);
-      sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
-      res.send('Jonatildi')
-
-
-    })
+    const Verify = new verify({tel: req.body.mobile,verifycode: verifiCode,gacha: (new Date().getTime() + 300000) })
+    Verify.save()
+      .then(resp => {
+        console.log('saqlandi');
+       
+        sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
+      })
       .catch(err => {
         console.log('Verifyda xatolik');
         console.log(err);
@@ -385,12 +379,12 @@ app.post('/forget', async (req, res) => {
   }
   const sms = Math.floor(Math.random() * 100000);
 
-  const Verify_code = new verify({ tel: req.body.mobile, verifycode: sms, gacha: `${new Date().getTime() + 300000}` })
+  const Verify_code = new verify({ tel: req.body.mobile, verifycode: sms, gacha: (new Date().getTime() + 300000) })
   Verify_code.save()
     .then(resp => {
       console.log(resp);
-     
-       sendSMS(req.body.mobile.slice(1, 13), `verify code:${sms}`, res)
+
+      sendSMS(req.body.mobile.slice(1, 13), `verify code:${sms}`, res)
     })
     .catch(err => {
       console.log('xato 1');
@@ -658,3 +652,13 @@ app.post('/changetarif', async (req, res) => {
     })
 })
 module.exports = app;
+
+
+
+
+
+
+
+
+
+

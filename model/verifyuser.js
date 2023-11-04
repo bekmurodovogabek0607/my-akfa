@@ -4,8 +4,7 @@ const verify = new mongoose.Schema({
    
     tel: { type: String },
     verifycode:{type:String},
-   
-    gacha:{type:String},
+    gacha:{type:Number},
 
 });
 
