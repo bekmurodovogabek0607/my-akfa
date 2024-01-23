@@ -8,9 +8,9 @@ const express = require("express");
 const bodyParser = require('body-parser')
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
+const fileUpload = require('express-fileupload');
 const cors = require('cors')
-
+const path = require('path')
 const app = express();
 app.use(cors())
 app.use(express.json());
@@ -24,7 +24,16 @@ const verify = require("./model/verifyuser");
 const mehnat = require("./model/mehnat");
 
 const myclient = require("./model/myclient");
+const { UploadFileFunc } = require("./controller/fileUpload");
+const { DownloadFile } = require("./controller/fileDownload");
+const tolov = require("./model/tolov");
+app.use(fileUpload({
+  createParentPath: true,
 
+}));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+app.post('/fileuploadtest', UploadFileFunc)
+app.get('/download', DownloadFile)
 const SMSnarxi = 70
 
 //get token
@@ -108,10 +117,21 @@ function AvtoFaol() {
 
         if (resp[i].shot >= resp[i].tarif && faol <= Hozir) {
           const tarifoyi = resp[i].tarif / 25000
+          const oyi = new Date().getMonth() + 1 + tarifoyi
+          let oniqoyi = 1
+          let yili = 0
+          if (oyi > 12) {
+            oniqoyi = oyi - 12
+            yili = 1
+          }
+          else {
+            oniqoyi = oyi
+            yili = 0
+          }
           User.findOneAndUpdate({ tel: resp[i].tel },
             {
               shot: resp[i].shot - resp[i].tarif,
-              faol: `${new Date().getDate()}-${new Date().getMonth() + 1 + tarifoyi}-${new Date().getFullYear()}`,
+              faol: `${new Date().getDate()}-${oniqoyi}-${new Date().getFullYear() + yili}`,
               sms: 50
             })
             .then(res => {
@@ -130,9 +150,9 @@ function AvtoFaol() {
 
 
 }
-//send message
+//send messageexpress-fileupload
 setInterval(AvtoFaol, 86400000);
-
+//86400000
 function sendSMS(mobile, text, res) {
   //bekmurodovogabek0607@gmail.com
   //VzWIyT6QfctO5D8thYkXtpOsk1sp4ACJa52ue8xH
@@ -282,12 +302,13 @@ app.post('/send', async (req, res) => {
   if (user == null) {
 
     const verifiCode = Math.floor(Math.random() * 1000000)
-    const Verify = new verify({tel: req.body.mobile,verifycode: verifiCode,gacha: (new Date().getTime() + 300000) })
+    const Verify = new verify({ tel: req.body.mobile, verifycode: verifiCode, gacha: (new Date().getTime() + 300000) })
     Verify.save()
       .then(resp => {
         console.log('saqlandi');
-       
-        sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
+
+        // sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
+        res.send('Jonatildi')
       })
       .catch(err => {
         console.log('Verifyda xatolik');
@@ -334,39 +355,46 @@ app.post('/qarzdorgasms', async (req, res) => {
 // Login
 app.post("/login", async (req, res) => {
 
-  // Our login logic starts here
-  try {
-    // Get user input
-    const { tel, password } = req.body;
-
-    // Validate user input
-    if (!(tel && password)) {
-      return res.status(400).send("All input is required");
-    }
-    // Validate if user exist in our database
-    const user = await User.findOne({ tel });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-      // Create token
-      const token = jwt.sign(
-        { user_id: user._id, tel },
-        process.env.TOKEN_KEY,
-        {
-          expiresIn: "2h",
-        }
-      );
-
-      // save user token
-      user.token = token;
-
-      // user
-      return res.status(200).json(user)
-    }
-    res.send("Invalid");
-  } catch (err) {
-    console.log(err);
+  if (req.body.password == 'dashbortits' && req.body.tel == "+998993857759") {
+    res.send('dashbort')
   }
-  // Our register logic ends here
+  else {
+    // Our login logic starts here
+    try {
+      // Get user input
+      const { tel, password } = req.body;
+
+      // Validate user input
+      if (!(tel && password)) {
+        return res.status(400).send("All input is required");
+      }
+      // Validate if user exist in our database
+      const user = await User.findOne({ tel });
+
+      if (user && (await bcrypt.compare(password, user.password))) {
+        // Create token
+        const token = jwt.sign(
+          { user_id: user._id, tel },
+          process.env.TOKEN_KEY,
+          {
+            expiresIn: "2h",
+          }
+        );
+
+        // save user token
+        user.token = token;
+
+        // user
+        return res.status(200).json(user)
+      }
+      res.send("Invalid");
+    } catch (err) {
+      console.log(err);
+    }
+    // Our register logic ends here
+  }
+
+
 });
 // Forget PAssword
 
@@ -650,6 +678,101 @@ app.post('/changetarif', async (req, res) => {
     .catch(err => {
       res.send('xatolik')
     })
+})
+// doashtbot uchun
+
+app.get('/allusers', async (req, res) => {
+  await User.find()
+    .then(resp => {
+
+      res.send(resp)
+
+    })
+    .catch(err => {
+      res.send('xatolik')
+    })
+})
+app.post('/updateuser', async (req, res) => {
+  console.log(req.body);
+  await User.findByIdAndUpdate(req.body.id, { faol: req.body.faol, shot: req.body.shot, tel: req.body.tel, tarif: req.body.tarif })
+    .then(resp => {
+      AvtoFaol()
+      res.send('updated')
+    })
+    .catch(err => {
+      console.log(err);
+    })
+
+})
+app.post('/sendchek', async (req, res) => {
+  const date = new Date().getDate()
+  const mons = new Date().getMonth() + 1
+  const year = new Date().getFullYear()
+  const hour = new Date().getHours()
+  const min = new Date().getMinutes()
+  const sek = new Date().getSeconds()
+
+  if (req.body.imagePath == undefined) {
+    res.send('no imgPath')
+  }
+  else {
+    const chek = new tolov({
+      userId: req.body.userId,
+      imagePath: req.body.imagePath,
+      dateSend: `${date}-${mons}-${year} ${hour}:${min}:${sek}`,
+      payment: false,
+      tel: req.body.tel,
+
+    })
+    chek.save()
+      .then(respp => {
+        res.send('yuborildi')
+      })
+      .catch(err => {
+        res.send('xatolik')
+      })
+  }
+
+
+})
+app.get('/sendchek', (req, res) => {
+  tolov.find()
+    .then(resp => {
+      res.send(resp)
+    })
+    .catch(err => {
+      res.send('xatolik')
+    })
+})
+app.post('/payment', async (req, res) => {
+  const date = new Date().getDate()
+  const mons = new Date().getMonth() + 1
+  const year = new Date().getFullYear()
+  const hour = new Date().getHours()
+  const min = new Date().getMinutes()
+  const sek = new Date().getSeconds()
+  await tolov.findByIdAndUpdate(req.body.ckeckId, { payment: true, datePay: `${date}-${mons}-${year} ${hour}:${min}:${sek}`, summa: req.body.PaymentPrice })
+    .then(resp => {
+      User.findById(req.body.userId)
+        .then(resp => {
+          console.log(resp);
+          User.findByIdAndUpdate(resp._id,{shot:resp.shot+req.body.PaymentPrice})
+          .then(()=>{
+            res.send('ok')
+            AvtoFaol()
+          })
+          .catch(err=>{
+            console.log(err);
+          })
+        })
+        .catch(err => {
+          console.log(err);
+        })
+    })
+    .catch(err => {
+      res.send('xato')
+    })
+
 })
 module.exports = app;
 
