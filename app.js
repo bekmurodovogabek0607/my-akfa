@@ -307,8 +307,8 @@ app.post('/send', async (req, res) => {
       .then(resp => {
         console.log('saqlandi');
 
-        // sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
-        res.send('Jonatildi')
+         sendSMS(req.body.mobile, `Tastiqlash kodi:${verifiCode}`, res)
+        // res.send('Jonatildi')
       })
       .catch(err => {
         console.log('Verifyda xatolik');
